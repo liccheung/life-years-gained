@@ -1,0 +1,52 @@
+create.mortality.dataset.R in nhis1997_2001 folder
+imputation_batch_1997_2001.R - creates 5 imputation data sets for NHIS 1997-2001
+nhis_imputations.y2016m11d06.R - imputations function
+(similar files in nhis2002_09, nhis2013_15 folders and in biowulf/imputation_batch_2002_2009 and biowulf/nhis_imputation_function.R)
+
+create.mortality.validation.datasets - creates mortality fitting (odd) and validation (even) data sets
+create.freq.R - Supplementary Table 1
+
+all.mortality.models.v6.R - considers all possible transformations for mortality model fitted to odd NHIS years 1997-2009
+
+create.mortality.model.v6.R - final version of created mortality model (odd NHIS years 1997-2009) - Table 1
+                              also considers effect of comorbidity adjustments on BMI - Supplementary Table 2
+                              and explores interactions
+
+biowulf/combine1997_09_even_files.R - combines mortality estimates for even years 1997-2009 (swarm13)
+biowulf/validate1.R - program that calls validate.R for even years 1997-2009 (swarm11) 58157528_0
+biowulf/validate.R - function that computes mortality risks until end of 2011
+
+validation_mort6.R - calibration using even years 1997-2009 - Supplement tables 3/4
+summarize_auc.R - produces overall AUC for mortality model, by USPSTF-eligible/-ineligible - Supplement tables 3
+biowulf/auc1-auc5.R - creates AUC data sets (swarm15-swarm19)
+
+biowulf/est_lyg2.R - estimates life gained in 2013-2015 (swarm3)
+biowulf/lyg.R - function that estimates lyg (used in est_lyg2.R)
+biowulf/lcrisk.R - function that estimates lcrisk (used in lyg.R)
+biowulf/combine2013_15_files.R - combines lyg estimates for even years 2013-2015 (swarm4)
+
+table2_examples.R - examples used in Table 2
+additional_lyg_plots_v4.R - produces distribution of risk versus life gained in Figure 1
+
+lyg_conc_curve_v6.R - creates Figure: concentration curve for Life Gained
+                   also produces numbers for Table 3: Projected yield from CT screening by selection methods
+lyg_conc_curve_fcn.R - function required to calculate statistics for lyg_conc_curve.R
+
+additional_lyg_plots_v2.R - produces the money figure comparing risk-based and life-gained based selection by age (USPSTF-sized) (3)
+
+selections.nhis2013_15v7.R - compares selections by the 3 methods
+
+extras:
+
+
+venn_diagram_v2.R - creates 3 venn diagrams comparing people selected, deaths prevented, life gained from the 3 strategies
+
+compare.selections.nhis2013_15.R - identify swappers between the 3 selection methods
+
+abandoned extras:
+benefits.R - produces lorenz curve of risk-based versus life-gained based
+             original scatter plot and bar plot of life gained and risk in the NHIS
+             life gained and risks by comorbidities
+             life gained and risks by age
+             
+             

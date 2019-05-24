@@ -1,0 +1,166 @@
+rm(list=ls())
+setwd("~/Desktop/Lung cancer/lrisk/prog/lifeyearsgained")
+load("~/Desktop/Lung cancer/lrisk/other/lifeyearsgained/nhis97_01.RData")
+nhis <- nhis97_01
+
+names(nhis)[names(nhis)=="AGE_P"] <- "age"
+names(nhis)[names(nhis)=="WTFA_SA"]  <- "wt"
+names(nhis)[names(nhis)=="stratum"]  <- "strata"
+names(nhis)[names(nhis)=="NHIS_YR"] <- "year"
+
+nhis$intyear <- nhis$year+.125*(nhis$INTV_QRT==1)+.375*(nhis$INTV_QRT==2)+
+                .625*(nhis$INTV_QRT==3)+.875*(nhis$INTV_QRT==4)
+nhis$female <- ifelse(nhis$sex==2,1,0)
+
+nhis$edu <- ifelse(nhis$educ==12|nhis$educ==1|nhis$educ==2|nhis$educ==3|nhis$educ==4|nhis$educ==5|nhis$educ==6|nhis$educ==7|nhis$educ==8|nhis$educ==9|nhis$educ==10|nhis$educ==11,"8-11 years",
+                   ifelse(nhis$educ==13,"12 years or completed high school",
+                          ifelse(nhis$educ==16|nhis$educ==14,"Post-high school training other than college",
+                                 ifelse(nhis$educ==0,"Less than 8 years",
+                                        ifelse(nhis$educ==15,"Some college",
+                                               ifelse(nhis$educ==17|nhis$educ==18,"College graduate",
+                                                      ifelse(nhis$educ==98|nhis$educ==97|nhis$educ==99,"Missing","Post graduate")))))))
+
+nhis$bmi[nhis$bmi==99.99] <- NA
+
+nhis$current <- ifelse(nhis$SMKSTAT1==1|nhis$SMKSTAT1==4,1,0)										  
+nhis$former <- ifelse(nhis$SMKSTAT1==2,1,0)											  
+nhis$never <- ifelse(nhis$SMKSTAT1==3,1,0)											  
+nhis$unknown <-  ifelse(nhis$SMKSTAT1==9,1,0)	
+
+nhis$fam.lung.trend <- ifelse(nhis$FHFTYP14==1,1,0)+ifelse(nhis$FHMTYP14==1,1,0)
+nhis$fam.lung.trend[is.na(nhis$fam.lung.trend)] <- 0
+
+nhis$prior.cancer <- ifelse(nhis$canev==1,1,0)
+nhis$lung.cancer.before <- ifelse(!is.na(nhis$CNKIND14) & nhis$CNKIND14==1,1,0)
+nhis$hypertension <- ifelse(nhis$hypev==1,1,0)
+nhis$chd <- ifelse(nhis$chdev==1,1,0)
+nhis$angina <- ifelse(nhis$angev==1,1,0)
+nhis$heartattack <- ifelse(nhis$miev==1,1,0)	
+nhis$heartdisease <- ifelse(nhis$hrtev==1,1,0)	
+nhis$stroke <- ifelse(nhis$strev==1,1,0)	
+nhis$emp <- ifelse(nhis$ephev==1,1,0)
+nhis$diab <- ifelse(nhis$dibev==1,1,0)	 
+nhis$bron <- ifelse(nhis$cbrchyr==1,1,0)	
+nhis$kidney <- ifelse(nhis$kidwkyr==1,1,0)	
+nhis$liver <- ifelse(nhis$livyr==1,1,0)	
+nhis$speceq <- ifelse(nhis$speceq==1,1,0)
+
+nhis$cpd <- nhis$cigsday
+nhis$cpd[nhis$cpd==97|nhis$cpd==98|nhis$cpd==99] <- NA
+
+nhis$smoke.age.start <- nhis$smkreg
+nhis$smoke.age.start[nhis$smoke.age.start==96|nhis$smoke.age.start==97|nhis$smoke.age.start==98|nhis$smoke.age.start==99] <- NA
+
+nhis$qtyears <- nhis$smkqty
+nhis$qtyears[nhis$qtyears==97|nhis$qtyears==98|nhis$qtyears==99] <- NA
+nhis$qtyears[!is.na(nhis$qtyears)&nhis$qtyears==0] <- 1/2
+
+# TREAT QUITTERS IN PAST YEAR AS CURRENT
+nhis$former[nhis$smkqtd==1|nhis$smkqtd==2|nhis$smkqtd==9] <- 0
+nhis$current[nhis$smkqtd==1|nhis$smkqtd==2|nhis$smkqtd==9] <- 1
+nhis$qtyears[nhis$current==1] <- 0
+
+nhis$smkyears <- nhis$age-nhis$smoke.age.start-nhis$qtyears 
+nhis$smkyears <- ifelse(!is.na(nhis$smkyears)&nhis$smkyears<0,1/12,nhis$smkyears) 
+nhis$birthyear <- nhis$year-nhis$age
+
+# APPLY EXCLUSION CRITERIA; EVER SMOKERS, NO HISTORY OF LUNG CANCER
+sum(nhis$lung.cancer.before)
+sum(nhis$never)
+sum(nhis$unknown)
+sum(is.na(nhis$smoke.age.start))
+
+nhis <- subset(nhis, unknown==0&never==0&lung.cancer.before==0&
+                    is.na(smoke.age.start)==0)#&is.na(deathage)==0)
+
+
+keep <- c("pid",
+          "psu",
+          "strata",
+          "intyear",
+          "birthyear",
+          "year",
+          "age",
+          "bmi",
+          "cpd",
+          "current",
+          "edu",
+          "fam.lung.trend",
+          "hypertension",
+          "chd",
+          "angina",
+          "heartattack",
+          "heartdisease",
+          "stroke",
+          "emp",
+          "diab",
+          "bron",
+          "kidney",
+          "liver",
+          "speceq",
+          "female",
+          "former",
+          "prior.cancer",
+          "qtyears",
+          "smkyears",
+          "smoke.age.start")
+          #"deathage",
+          #"wt_mort",
+          #"wt_mort5")
+
+nhis <- nhis[,keep]
+
+nhis$edu <- factor(nhis$edu, 
+                   levels = c("Less than 8 years", 
+                              "8-11 years", 
+                              "12 years or completed high school", 
+                              "Post-high school training other than college", 
+                              "Some college", 
+                              "College graduate", "Post graduate", "Missing"),
+                   labels = c(1:7,"Missing"),order=TRUE
+)
+
+nhis$edu6 <- factor(ifelse(nhis$edu<=2,1,nhis$edu), lev=c(1,3:8),
+                    lab= c("<High School",
+                           "High School", 
+                           "Post-High School Training", 
+                           "Some College", 
+                           "College", "Post-Graduate","Missing"), order=TRUE)
+
+# MERGE AND SUMMARIZE SAMPLE ADULT FILES
+load(file="~/Desktop/Lung cancer/lrisk/other/nhis1997_2001/nhis1997.RData")
+load(file="~/Desktop/Lung cancer/lrisk/other/nhis1997_2001/nhis1998.RData")
+load(file="~/Desktop/Lung cancer/lrisk/other/nhis1997_2001/nhis1999.RData")
+load(file="~/Desktop/Lung cancer/lrisk/other/nhis1997_2001/nhis2000.RData")
+load(file="~/Desktop/Lung cancer/lrisk/other/nhis1997_2001/nhis2001.RData")
+load(file="~/Desktop/Lung cancer/lrisk/other/nhis1997_2001/mortality2011/mortality2011.RData")
+
+oldnhis <- rbind(nhis1997, nhis1998, nhis1999, nhis2000, nhis2001)
+
+mortality2011$year <- NULL
+nhis <- merge(mortality2011, nhis, by="pid") # MERGE THOSE WITH KNOWN MORTALITY OUTCOMES
+oldnhis <- subset(oldnhis,select=c("pid","race"))
+nhis <- merge(nhis, oldnhis, by="pid")
+
+nhis$race <- ifelse(is.na(nhis$race),"Missing",nhis$race)
+nhis$race <- factor(nhis$race, 
+                    lev=c("Non-Hispanic White", 
+                          "Non-Hispanic Black", 
+                          "Hispanic", 
+                          "Asian", 
+                          "American Indian/Alaskan Native",
+                          "Missing"),exclude=NULL,order=TRUE)
+
+nhis$wt_mort5 <- nhis$wt_mort/5
+nhis$deathage <- nhis$deathyear-nhis$intyear+nhis$age
+
+load(file="~/Desktop/Lung cancer/lrisk/other/stephanie/nhis/data/mortality/mortality.RData")
+mortality$deathyear2 <- floor(mortality$deathyear)+.125*((mortality$deathyear-floor(mortality$deathyear))==.125)+
+  .375*((mortality$deathyear-floor(mortality$deathyear))==.25)+
+  .625*((mortality$deathyear-floor(mortality$deathyear))==.375)+
+  .875*((mortality$deathyear-floor(mortality$deathyear))==.5)
+mortality <- subset(mortality,select=c("pid","lung.cancer.death","deathyear2"))
+nhis <- merge(mortality, nhis, by="pid")
+nhis$deathage2 <- nhis$deathyear2-nhis$intyear+nhis$age
+
+save(nhis,file="~/Desktop/Lung cancer/lrisk/other/lifeyearsgained/cleaned.nhis97_01.RData")
